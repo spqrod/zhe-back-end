@@ -1,9 +1,11 @@
 const express = require("express");
 const app = express();
 const port = 8080;
-
+require("dotenv").config();
 const mongoose = require("mongoose");
-const mongoDBURL = "mongodb+srv://rodionsmongodb:qVebdKFuuQotiSK3@rodionscluster.ejhbsag.mongodb.net/?retryWrites=true&w=majority";
+const dbpassword = process.env.DB_PASSWORD;
+const dbusername = process.env.DB_USERNAME;
+const mongoDBURL = `mongodb+srv://${dbusername}:${dbpassword}@rodionscluster.ejhbsag.mongodb.net/?retryWrites=true&w=majority`;
 
 mongoose.connect(mongoDBURL).then(() => console.log("MongoDB connected"), error => console.log(error));
 
@@ -17,8 +19,6 @@ const timesSchema = new mongoose.Schema({
 });
 
 const timesModel = new mongoose.model("timesModelName", timesSchema);
-
-
 
 app.use(express.static("build"));
 
@@ -58,8 +58,6 @@ app.post("api/dates/", (req, res) => {
     console.log("POST request for /api/dates/ received");
     console.log(req);
 });
-
-
 
 // Delete
 
