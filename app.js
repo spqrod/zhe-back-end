@@ -1,11 +1,15 @@
 const express = require("express");
 const app = express();
 const port = 8080;
+const nodemailer = require("nodemailer");
+const validator = require("validator");
 require("dotenv").config();
+
+// MONGODB
 const mongoose = require("mongoose");
-const dbpassword = process.env.DB_PASSWORD;
-const dbusername = process.env.DB_USERNAME;
-const mongoDBURL = `mongodb+srv://${dbusername}:${dbpassword}@rodionscluster.ejhbsag.mongodb.net/?retryWrites=true&w=majority`;
+const mongoDBPassword = process.env.MONGODB_PASSWORD;
+const mongoDBUsername = process.env.MONGODB_USERNAME;
+const mongoDBURL = `mongodb+srv://${mongoDBUsername}:${mongoDBPassword}@rodionscluster.ejhbsag.mongodb.net/?retryWrites=true&w=majority`;
 
 mongoose.connect(mongoDBURL).then(() => console.log("MongoDB connected"), error => console.log(error));
 
@@ -20,7 +24,20 @@ const timesSchema = new mongoose.Schema({
 
 const timesModel = new mongoose.model("timesModelName", timesSchema);
 
+// NODEMAILER
+
+const transporter = nodemailer.createTransport({
+    host: "",
+    port: 123,
+    secure: true,
+    auth: {
+        user: process.env.EMAIL_USERNAME,
+        pass: process.env.EMAIL_PASSWORD
+    }
+});
+
 app.use(express.static("build"));
+app.use(express.json());
 
 // GET all available dates
 app.get("/api/dates", (req, res) => {
@@ -31,7 +48,7 @@ app.get("/api/dates", (req, res) => {
     });
 });
 
-// PUT. Update a date as taken
+// PUT date as taken
 app.put("/api/dates/:dateid", (req, res) => {
     console.log("PUT api/dates/:dateid request received");
     const { dateid } = req.params;
@@ -53,15 +70,32 @@ app.put("/api/dates/:dateid", (req, res) => {
     }
 });
 
-// Post new date
-app.post("api/dates/", (req, res) => {
-    console.log("POST request for /api/dates/ received");
-    console.log(req);
+// POST booking email
+app.post("/api/email/booking", (req, res) => {
+    console.log("POST booking email for /api/email/booking received");
+    let { date, name, email, phone } = req.body;
+    date = sanitizeString(date);
+    name = sanitizeString(name);
+    email = sanitizeString(email);
+    phone = sanitizeString(phone);
+    const emailText = `Новая запись на 15-ти минутную консультацию с сайта.\nДата (по МСК): ${date}\nИмя: ${name}\nEmail: ${email}\nТелефон: ${phone}`;
+
+    // const emailTransporter = transporter.sendMail({
+    //    from: "",
+    //    to: "",
+    //    subject: "Новая запись",
+    //    text: emailText,
+    // });
+    function sanitizeString(dirtyString) {
+        let cleanString = validator.blacklist(dirtyString, /<>\/\\\|`"'~/);
+        cleanString = validator.escape(cleanString);
+        cleanString = validator.trim(cleanString);
+        cleanString = validator.stripLow(cleanString);
+        return cleanString;
+    }
 });
 
-// Delete
-
-app.listen(port, () => console.log("listening to port " + port));
+app.listen(port, () => console.log("Listening to port " + port));
 
 // generateNewDates();
 function generateNewDates() {
