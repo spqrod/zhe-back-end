@@ -1,40 +1,10 @@
 const express = require("express");
 const app = express();
 const port = 8080;
-const nodemailer = require("nodemailer");
-const validator = require("validator");
 require("dotenv").config();
-
-// MONGODB
-const mongoose = require("mongoose");
-const mongoDBPassword = process.env.MONGODB_PASSWORD;
-const mongoDBUsername = process.env.MONGODB_USERNAME;
-const mongoDBURL = `mongodb+srv://${mongoDBUsername}:${mongoDBPassword}@rodionscluster.ejhbsag.mongodb.net/?retryWrites=true&w=majority`;
-
-mongoose.connect(mongoDBURL).then(() => console.log("MongoDB connected"), error => console.log(error));
-
-const timesSchema = new mongoose.Schema({
-    date: Date,
-    dateInLocaleString: String,
-    taken: {
-        type: Boolean,
-        default: false
-    }
-});
-
-const timesModel = new mongoose.model("timesModelName", timesSchema);
-
-// NODEMAILER
-
-const transporter = nodemailer.createTransport({
-    host: "",
-    port: 123,
-    secure: true,
-    auth: {
-        user: process.env.EMAIL_USERNAME,
-        pass: process.env.EMAIL_PASSWORD
-    }
-});
+const { mongoose, dateModel } = require("./database");
+const { transporter } = require("./email");
+const { sanitizeString } = require("./sanitizeString");
 
 app.use(express.static("build"));
 app.use(express.json());
@@ -42,7 +12,7 @@ app.use(express.json());
 // GET all available dates
 app.get("/api/dates", (req, res) => {
     console.log("GET request received /api/dates");
-    const data = timesModel.find({ taken: false }).then((data) => {
+    const data = dateModel.find({ taken: false }).then((data) => {
         data[0];
         return res.json(data);
     });
@@ -57,7 +27,7 @@ app.put("/api/dates/:dateid", (req, res) => {
 
     async function findByIdAndUpdate() {
         try {
-            const dateDoc = await timesModel.findById(dateid);
+            const dateDoc = await dateModel.findById(dateid);
             // dateDoc.taken = true;
             // dateDoc.save();
             resultStatus = true;
@@ -78,21 +48,25 @@ app.post("/api/email/booking", (req, res) => {
     name = sanitizeString(name);
     email = sanitizeString(email);
     phone = sanitizeString(phone);
-    const emailText = `Новая запись на 15-ти минутную консультацию с сайта.\nДата (по МСК): ${date}\nИмя: ${name}\nEmail: ${email}\nТелефон: ${phone}`;
+    const emailBody = `<h2>Новая запись на 15-ти минутную консультацию с сайта.</h2>
+    <p>Дата (по МСК): ${date}</p>
+    <p>Имя: ${name}</p>
+    <p>Email: ${email}</p>
+    <p>Телефон: ${phone}</p>`;
 
-    // const emailTransporter = transporter.sendMail({
-    //    from: "",
-    //    to: "",
-    //    subject: "Новая запись",
-    //    text: emailText,
-    // });
-    function sanitizeString(dirtyString) {
-        let cleanString = validator.blacklist(dirtyString, /<>\/\\\|`"'~/);
-        cleanString = validator.escape(cleanString);
-        cleanString = validator.trim(cleanString);
-        cleanString = validator.stripLow(cleanString);
-        return cleanString;
+    const message = {
+        from: "hi@dariazherebtsova.ru",
+        to: "rodionvh@gmail.com",
+        subject: "Новая запись с сайта",
+        html: emailBody
     }
+
+    transporter.sendMail(message, (err, info) => {
+        if (err) 
+            console.log(err);
+        else 
+            console.log(info.response)
+    });
 });
 
 app.listen(port, () => console.log("Listening to port " + port));
@@ -110,14 +84,14 @@ function generateNewDates() {
         
         const dateInLocaleStringGenerated = new Date(dateGenerated).toLocaleString("ru-RU", options);
 
-        const newDateDocument = new timesModel({ date: dateGenerated, dateInLocaleString: dateInLocaleStringGenerated });
+        const newDateDocument = new dateModel({ date: dateGenerated, dateInLocaleString: dateInLocaleStringGenerated });
         newDateDocument.save();
     }
 }
 
 // updateAllDates();
 async function updateAllDates() {
-    const response = await timesModel.updateMany({ taken: true }, { taken: false });
+    const response = await dateModel.updateMany({ taken: true }, { taken: false });
     console.log(response.matchedCount);
     console.log(response.modifiedCount)
     console.log(response.acknowledged);
