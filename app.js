@@ -48,6 +48,7 @@ app.post("/api/email/booking", (req, res) => {
     name = sanitizeString(name);
     email = sanitizeString(email);
     phone = sanitizeString(phone);
+
     const emailBody = `<h2>Новая запись на 15-ти минутную консультацию с сайта.</h2>
     <p>Дата (по МСК): ${date}</p>
     <p>Имя: ${name}</p>
@@ -55,11 +56,11 @@ app.post("/api/email/booking", (req, res) => {
     <p>Телефон: ${phone}</p>`;
 
     const message = {
-        from: "hi@dariazherebtsova.ru",
-        to: "rodionvh@gmail.com",
+        from: process.env.EMAIL_FROM,
+        to: process.env.EMAIL_TO,
         subject: "Новая запись с сайта",
         html: emailBody
-    }
+    };
 
     transporter.sendMail(message, (err, info) => {
         if (err) 
@@ -67,6 +68,33 @@ app.post("/api/email/booking", (req, res) => {
         else 
             console.log(info.response)
     });
+});
+
+// POST contact email
+app.post("/api/contact", (req, res) => {
+    console.log("POST contact email for /api/contact received");
+    let { name, email, phone, formMessage } = req.body;
+    name = sanitizeString(name);
+    email = sanitizeString(email);
+    phone = sanitizeString(phone);
+    formMessage = sanitizeString(formMessage);
+    
+    const emailBody = `<h2>Новое сообщение с сайта</h2>
+    <p>Имя: ${name}</p>
+    <p>Email: ${email}</p>
+    <p>Телефон: ${phone}</p>
+    <p>Сообщение: ${formMessage}</p>`;
+
+    const message = {
+        from: process.env.EMAIL_FROM,
+        to: process.env.EMAIL_TO,
+        subject: "Новое сообщение с сайта",
+        html: emailBody
+    };
+
+    transporter.sendMail(message)
+        .then(() => res.json({success: true}))
+        .catch(() => res.json({success: false}));
 });
 
 app.listen(port, () => console.log("Listening to port " + port));

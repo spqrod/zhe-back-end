@@ -1,7 +1,7 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.dariazherebtsova.ru",
+    host: process.env.EMAIL_HOST,
     port: 465,
     secure: true,
     auth: {
