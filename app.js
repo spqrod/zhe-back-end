@@ -1,17 +1,26 @@
 const express = require("express");
 const app = express();
-const port = 8080;
+const port = 80;
+const cors = require("cors");
+const axios = require("axios");
 require("dotenv").config();
 const { mongoose, dateModel } = require("./database");
 const { transporter } = require("./email");
 const { sanitizeString } = require("./sanitizeString");
+const { logger } = require("./logger");
 
 app.use(express.static("build"));
 app.use(express.json());
+app.use(cors());
+app.use(express.urlencoded({ extended: true }));
+app.use((req, res, next) => {
+    // Log an info message for each incoming request
+    logger.info(`Received a ${req.method} request for ${req.url}`);
+    next();
+});
 
 // GET all available dates
 app.get("/api/dates", (req, res) => {
-    console.log("GET request received /api/dates");
     const data = dateModel.find({ taken: false }).then((data) => {
         data[0];
         return res.json(data);
@@ -20,7 +29,6 @@ app.get("/api/dates", (req, res) => {
 
 // PUT date as taken
 app.put("/api/dates/:dateid", (req, res) => {
-    console.log("PUT api/dates/:dateid request received");
     const { dateid } = req.params;
     findByIdAndUpdate();
     let resultStatus;
@@ -42,7 +50,6 @@ app.put("/api/dates/:dateid", (req, res) => {
 
 // POST booking email
 app.post("/api/email/booking", (req, res) => {
-    console.log("POST booking email for /api/email/booking received");
     let { date, name, email, phone } = req.body;
     date = sanitizeString(date);
     name = sanitizeString(name);
@@ -71,8 +78,24 @@ app.post("/api/email/booking", (req, res) => {
 });
 
 // POST contact email
-app.post("/api/contact", (req, res) => {
-    console.log("POST contact email for /api/contact received");
+app.post("/api/contact", async (req, res) => {
+
+    // const { token, inputVal } = req.body;
+    // const googleURL = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.CAPTCHA_SECRET_KEY}&response=${token}`;
+
+
+    // try {
+    //     const response = await axios.post("")
+    
+    //     if (response.data.success) {
+    //         res.send("reCAPTCHA successful");
+    //     } else 
+    //         res.send("reCAPTCHA failed");
+    // } catch (error) {
+    //     console.error(error);
+    //     res.status(500).send("Error verifying reCAPTCHA");
+    // }
+
     let { name, email, phone, formMessage } = req.body;
     name = sanitizeString(name);
     email = sanitizeString(email);
@@ -97,30 +120,8 @@ app.post("/api/contact", (req, res) => {
         .catch(() => res.json({success: false}));
 });
 
+app.get("/test", (req, res) => {
+    res.json({ status: "received" });
+})
+
 app.listen(port, () => console.log("Listening to port " + port));
-
-// generateNewDates();
-function generateNewDates() {
-    for (let i = 0; i < 15; i++) {
-        const dateGenerated = `2023-08-${i+10}T11:00`
-
-        const options = {
-            dateStyle: "short",
-            timeStyle: "short",
-            timeZone: "UTC"
-        }
-        
-        const dateInLocaleStringGenerated = new Date(dateGenerated).toLocaleString("ru-RU", options);
-
-        const newDateDocument = new dateModel({ date: dateGenerated, dateInLocaleString: dateInLocaleStringGenerated });
-        newDateDocument.save();
-    }
-}
-
-// updateAllDates();
-async function updateAllDates() {
-    const response = await dateModel.updateMany({ taken: true }, { taken: false });
-    console.log(response.matchedCount);
-    console.log(response.modifiedCount)
-    console.log(response.acknowledged);
-}

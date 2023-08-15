@@ -1,0 +1,10 @@
+{"level":"info","message":"request received"}
+{"level":"info","message":"GET /test received"}
+{"level":"info","message":"info"}
+{"level":"info","message":"GET /test received"}
+{"level":"info","message":"GET /test received"}
+2023-08-15T00:35:28.545Z info: GET /test received
+2023-08-15T00:37:28.682Z info: Received a GET request for /test
+2023-08-15T00:37:28.688Z info: GET /test received
+2023-08-15T00:37:34.515Z info: Received a GET request for /api/dates
+2023-08-15T00:38:29.793Z info: Received a GET request for /test
