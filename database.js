@@ -2,10 +2,11 @@ const mongoose = require("mongoose");
 const mongoDBPassword = process.env.MONGODB_PASSWORD;
 const mongoDBUsername = process.env.MONGODB_USERNAME;
 const mongoDBURL = `mongodb+srv://${mongoDBUsername}:${mongoDBPassword}@rodionscluster.ejhbsag.mongodb.net/?retryWrites=true&w=majority`;
+const { logger } = require("./logger");
 
-mongoose.connect(mongoDBURL).then(() => console.log("Connected to MongoDB"), error => console.log(error));
+mongoose.connect(mongoDBURL).then(() => logger.info("Connected to MongoDB"), error => logger.info(error));
 
-const dateSchema = new mongoose.Schema({
+const timesSchema = new mongoose.Schema({
     date: Date,
     dateInLocaleString: String,
     taken: {
@@ -14,7 +15,7 @@ const dateSchema = new mongoose.Schema({
     }
 });
 
-const dateModel = new mongoose.model("timesModelName", dateSchema);
+const dateModel = new mongoose.model("timesModelName", timesSchema);
 
 exports.mongoose = mongoose;
 exports.dateModel = dateModel;

@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+const { logger } = require("./logger");
 
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
@@ -12,9 +13,9 @@ const transporter = nodemailer.createTransport({
 
 transporter.verify(function (error, success) {
     if (error)
-        console.log(error);
+        logger.info(error);
     else    
-        console.log("Connected to mail server");
+        logger.info("Connected to mail server");
 });
 
 exports.transporter = transporter;

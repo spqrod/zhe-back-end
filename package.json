@@ -10,7 +10,8 @@
     "nodemailer": "^6.9.4",
     "nodemon": "^2.0.22",
     "validator": "^13.11.0",
-    "winston": "^3.10.0"
+    "winston": "^3.10.0",
+    "winston-daily-rotate-file": "^4.7.1"
   },
   "name": "server",
   "version": "1.0.0",
